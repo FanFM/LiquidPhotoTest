@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
+import androidx.activity.addCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -36,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.krass.liquidtestphoto.composables.Dropdown
 import com.krass.liquidtestphoto.composables.ui.theme.LiquidTestPhotoTheme
@@ -46,16 +46,21 @@ import java.io.OutputStream
 
 class PhotoActivity : ComponentActivity() {
 
+    private val context = this
+    private var uri: Uri = Uri.EMPTY
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             LiquidTestPhotoTheme {
-                val context = LocalContext.current
-                val uri = Uri.parse(intent.extras?.getString("uri"))
+                uri = Uri.parse(intent.extras?.getString("uri"))
                 cropImage(uri, context)
             }
+        }
+        onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
+            deleteFile(uri, context)
+            finish()
         }
     }
 }
@@ -112,15 +117,6 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
                             selectedItem = fileNames.get(0)
                         }
                     saveMediaToStorage(selectedItem, bitmap, context)
-
-                    val fdelete = File(getFilePath(uri, context)!!)
-                    if (fdelete.exists()) {
-                        if (fdelete.delete()) {
-                            println("file Deleted :")
-                        } else {
-                            println("file not Deleted :")
-                        }
-                    }
                         onBackPressedDispatcher?.onBackPressed()
                     }, modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)){
                     Text(text = "Save")
@@ -128,7 +124,17 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
             }
         }
     }
+}
 
+fun deleteFile(uri: Uri, context: Context){
+    val fdelete = File(getFilePath(uri, context)!!)
+    if (fdelete.exists()) {
+        if (fdelete.delete()) {
+            println("file Deleted :")
+        } else {
+            println("file not Deleted :")
+        }
+    }
 }
 
 fun saveMediaToStorage(fileName: String, bitmap: Bitmap, context: Context) {
