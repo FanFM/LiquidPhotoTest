@@ -1,10 +1,12 @@
-package com.krass.liquidtestphoto.composables
+package com.krass.liquidtestphoto.main.composables
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
 import android.provider.MediaStore
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -24,31 +26,38 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getString
 import androidx.core.content.ContextCompat.startActivity
-import com.krass.liquidtestphoto.PhotoActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.krass.liquidtestphoto.photo.PhotoActivity
 import com.krass.liquidtestphoto.R
+import com.krass.liquidtestphoto.photo.composables.squareSize
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-lateinit var cameraProvider: ProcessCameraProvider
-
 @Composable
-fun CameraPreviewScreen() {
+fun CameraPreviewScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+                        onStart: () -> Unit, // Send the 'started' analytics event
+                        onStop: () -> Unit // Send the 'stopped' analytics event
+) {
     val lensFacing = CameraSelector.LENS_FACING_BACK
-    val lifecycleOwner = LocalLifecycleOwner.current
+//    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val preview = Preview.Builder().build()
     val previewView = remember {
@@ -59,8 +68,33 @@ fun CameraPreviewScreen() {
         ImageCapture.Builder().build()
     }
 
+
+    // Safely update the current lambdas when a new one is provided
+    val currentOnStart by rememberUpdatedState(onStart)
+    val currentOnStop by rememberUpdatedState(onStop)
+    // If `lifecycleOwner` changes, dispose and reset the effect
+    DisposableEffect(lifecycleOwner) {
+        // Create an observer that triggers our remembered callbacks
+        // for sending analytics events
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                currentOnStart()
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                currentOnStop()
+            }
+        }
+
+        // Add the observer to the lifecycle
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        // When the effect leaves the Composition, remove the observer
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(lensFacing) {
-        val cameraProvider = context.getCameraProvider()
+        var cameraProvider = context.getCameraProvider()
         cameraProvider.unbindAll()
         val useCaseGroup = UseCaseGroup.Builder()
             .addUseCase(preview)
@@ -88,7 +122,9 @@ fun CameraPreviewScreen() {
 
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
         IconButton(
-            onClick = { captureImage(imageCapture, context) },
+            onClick = {
+                captureImage(imageCapture, context)
+            },
             modifier = Modifier
                 .height(96.dp)
                 .width(96.dp)
@@ -134,12 +170,18 @@ private fun captureImage(imageCapture: ImageCapture, context: Context) {
                 val intent = Intent(context, PhotoActivity::class.java)
                 intent.putExtra("uri", uri.toString())
                 startActivity(context, intent, null)
+//                finishActivity(context)
             }
 
             override fun onError(exception: ImageCaptureException) {
                 println("Failed $exception")
             }
         })
+}
+
+private fun finishActivity(context: Context) {
+    val activity = context.getActivity()
+    activity?.finish()
 }
 
 private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
@@ -150,3 +192,9 @@ private suspend fun Context.getCameraProvider(): ProcessCameraProvider =
             }, ContextCompat.getMainExecutor(this))
         }
     }
+
+fun Context.getActivity(): AppCompatActivity? = when (this) {
+    is AppCompatActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
+}

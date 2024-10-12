@@ -1,53 +1,71 @@
 package com.krass.liquidtestphoto.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.Color
+import com.krass.liquidtestphoto.main.composables.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Black,
+    secondary = SuvaGrey,
+    tertiary = SuvaGrey2,
+    background = Background,
+    surface = Surface,
+    onPrimary = OnPrimary,
+    onSecondary = OnSecondary,
+    onTertiary = OnTertiary,
+    onBackground = Color.White,
+    onSurface = Color.White,
+    error = Error,
+    onError = Color.White,
+    surfaceContainer = Black
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Primary,
+    secondary = Secondary,
+    tertiary = Tertiary,
+    background = Background,
+    surface = Surface,
+    onPrimary = OnPrimary,
+    onSecondary = OnSecondary,
+    onTertiary = OnTertiary,
+    onBackground = Color.White,
+    onSurface = OnSurface,
+    error = Error,
+    onError = Color.White,
+    surfaceContainer = SurfaceContainer
 )
 
 @Composable
-fun LiquidTestPhotoTheme(
+fun MainTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        /*dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+        }*/ //TODO commented to take a contrasting screenshot
 
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
+    }
+
+    val systemUiController = rememberSystemUiController()
+    DisposableEffect(systemUiController, darkTheme, dynamicColor) {
+        systemUiController.setNavigationBarColor(
+            color = Color.Transparent,
+            darkIcons = !darkTheme,
+            navigationBarContrastEnforced = false
+        )
+
+        onDispose { }
     }
 
     MaterialTheme(

@@ -1,4 +1,4 @@
-package com.krass.liquidtestphoto
+package com.krass.liquidtestphoto.photo
 
 import android.content.ContentValues
 import android.content.Context
@@ -16,6 +16,7 @@ import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,9 +38,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.krass.liquidtestphoto.composables.Dropdown
-import com.krass.liquidtestphoto.composables.ui.theme.LiquidTestPhotoTheme
+import com.krass.liquidtestphoto.R
+import com.krass.liquidtestphoto.fileNames
+import com.krass.liquidtestphoto.photo.composables.Dropdown
+import com.krass.liquidtestphoto.ui.theme.MainTheme
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -52,10 +57,11 @@ class PhotoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        uri = Uri.parse(intent.extras?.getString("uri"))
+        val cropImg = cropImage(uri, context)
         setContent {
-            LiquidTestPhotoTheme {
-                uri = Uri.parse(intent.extras?.getString("uri"))
-                cropImage(uri, context)
+            MainTheme {
+                PhotoScreen(cropImg, uri, context)
             }
         }
         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
@@ -65,8 +71,7 @@ class PhotoActivity : ComponentActivity() {
     }
 }
 
-    @Composable
-    fun cropImage(uri: Uri, context: Context) {
+    fun cropImage(uri: Uri, context: Context): Bitmap {
         val source = ImageDecoder.createSource(context.contentResolver, uri)
         val bitmap = ImageDecoder.decodeBitmap(source)
         val width: Int = bitmap.width
@@ -78,8 +83,8 @@ class PhotoActivity : ComponentActivity() {
         val crop = ((height - width) / 2) + dpAsPixels
 
 
-        val cropImg: Bitmap = Bitmap.createBitmap(bitmap, dpAsPixels, crop, width - dpAsPixels*2, width - dpAsPixels*2)
-        PhotoScreen(cropImg, uri, context)
+        return Bitmap.createBitmap(bitmap, dpAsPixels, crop, width - dpAsPixels*2, width - dpAsPixels*2)
+
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,18 +97,18 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
         topBar = {
             TopAppBar(
                 colors = topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
                 title = {
-                    Text("Top app bar")
+                    Text(stringResource(R.string.choose_name))
                 }
             )
         }){
             innerPadding ->
         Column(
             modifier = Modifier
-                .padding(innerPadding),
+                .padding(innerPadding).background(MaterialTheme.colorScheme.onBackground),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Box(Modifier.fillMaxSize()) {
@@ -119,7 +124,7 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
                     saveMediaToStorage(selectedItem, bitmap, context)
                         onBackPressedDispatcher?.onBackPressed()
                     }, modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)){
-                    Text(text = "Save")
+                    Text(text = stringResource(R.string.save))
                 }
             }
         }
@@ -138,6 +143,9 @@ fun deleteFile(uri: Uri, context: Context){
 }
 
 fun saveMediaToStorage(fileName: String, bitmap: Bitmap, context: Context) {
+
+    val sharedPref = context.getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
+    val folder = sharedPref.getInt("folder", 0)
     //Generating a file name
     val filename = "${fileName}.jpg"
 
@@ -155,7 +163,7 @@ fun saveMediaToStorage(fileName: String, bitmap: Bitmap, context: Context) {
                 //putting file information in content values
                 put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
                 put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Samples $folder")
             }
 
             //Inserting the contentValues to contentResolver and getting the Uri
@@ -169,7 +177,7 @@ fun saveMediaToStorage(fileName: String, bitmap: Bitmap, context: Context) {
         //These for devices running on android < Q
         //So I don't think an explanation is needed here
         val imagesDir =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            Environment.getExternalStoragePublicDirectory("Pictures/Samples $folder")
         val image = File(imagesDir, filename)
         fos = FileOutputStream(image)
     }
@@ -193,4 +201,11 @@ private fun getFilePath(uri: Uri, context: Context): String? {
         return picturePath
     }
     return null
+}
+
+@Preview
+@Composable
+fun PhotoScreenPreview(){
+    PhotoScreen(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), Uri.EMPTY, context = PhotoActivity())
+
 }

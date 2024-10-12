@@ -23,12 +23,12 @@
         android:theme="@style/Theme.LiquidTestPhoto"
         tools:targetApi="31">
         <activity
-            android:name=".PhotoActivity"
+            android:name=".photo.PhotoActivity"
             android:exported="false"
             android:label="@string/title_activity_photo"
             android:theme="@style/Theme.LiquidTestPhoto" />
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.LiquidTestPhoto">

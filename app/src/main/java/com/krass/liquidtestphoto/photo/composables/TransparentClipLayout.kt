@@ -1,4 +1,4 @@
-package com.krass.liquidtestphoto.composables
+package com.krass.liquidtestphoto.photo.composables
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas

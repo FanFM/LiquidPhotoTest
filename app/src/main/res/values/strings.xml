@@ -5,4 +5,11 @@
     <string name="stop_capture">Stop Capture</string>
     <string name="test">LiquidTestPhoto</string>
     <string name="title_activity_photo">PhotoActivity</string>
+    <string name="add_new_folder">New Test</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="send">Send</string>
+    <string name="add">Add</string>
+    <string name="save">Save</string>
+    <string name="choose_name">Choose Name</string>
 </resources>
