@@ -13,12 +13,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.krass.liquidtestphoto.BaseActivity
+import com.krass.liquidtestphoto.SamplesNames
 import com.krass.liquidtestphoto.main.composables.CameraPreviewScreen
 import com.krass.liquidtestphoto.main.composables.App
+import com.krass.liquidtestphoto.main.composables.MachinesList
 import com.krass.liquidtestphoto.ui.theme.MainTheme
 import java.io.File
 
@@ -26,51 +28,14 @@ import java.io.File
 class MainActivity : BaseActivity() {
 
     val images = mutableStateListOf<Uri>()
-    val machines = mutableStateMapOf<String, String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             MainPreview()
         }
-
-
-//        setContent {
-//            Box(
-//                modifier = Modifier.fillMaxSize()
-//            ) {
-//                Image(painterResource(R.drawable.logo_flex), contentDescription = "Logo", modifier = Modifier.fillMaxWidth().align(Alignment.Center))
-//                Button(
-//                    onClick = {
-//                        // Calls handleCameraPermission() from BaseActivity when the button is clicked
-//                        // This function checks for camera permission and requests it if not already granted
-//                        if(handleCameraPermission()){
-//                            setCameraPreview()
-//                        }
-//                    },
-//                    modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
-//                    colors = ButtonDefaults.buttonColors(
-//                        Color.Blue
-//                    )
-//                ) {
-//                    Text(text = "GO")
-//                }
-//                Button(
-//                    onClick = {
-//                        // Calls handleCameraPermission() from BaseActivity when the button is clicked
-//                        // This function checks for camera permission and requests it if not already granted
-//                        addNewFolder()
-//                    },
-//                    modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
-//                    colors = ButtonDefaults.buttonColors(
-//                        Color.DarkGray
-//                    )
-//                ) {
-//                    Text(text = "New Folder")
-//                }
-//            }
-//        }
     }
 
     override fun onResume() {
@@ -80,6 +45,7 @@ class MainActivity : BaseActivity() {
 
     @Composable
     fun MainPreview(){
+        val machines = remember { SamplesNames.getInstance().getMachines(this) }
         App(onClick = { button ->
             when(button){
                 "camera" -> {
@@ -87,9 +53,22 @@ class MainActivity : BaseActivity() {
                         setCameraPreview()
                     }
                 }
-                "newFolder" -> addNewFolder()
-                "send" -> {
-
+                "newFolder" -> {
+                    addNewFolder()
+                    getImages()
+                }
+                "machines" -> {
+                    setContent{
+                        MainTheme {
+                            MachinesList(machines, LocalLifecycleOwner.current, onStart = {
+                            }, onStop = {
+                                setContent {
+                                    SamplesNames.storeMachines(this, machines)
+                                    MainPreview()
+                                }
+                            })
+                        }
+                    }
                 }
             }
         }, images)

@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
 import android.provider.MediaStore
+import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -91,6 +92,7 @@ fun CameraPreviewScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.cur
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+
     }
 
     LaunchedEffect(lensFacing) {
@@ -138,6 +140,10 @@ fun CameraPreviewScreen(lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.cur
                     .width(96.dp)
             )
         }
+    }
+
+    BackHandler {
+        currentOnStop()
     }
 }
 

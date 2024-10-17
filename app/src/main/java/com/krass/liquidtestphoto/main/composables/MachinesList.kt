@@ -1,37 +1,154 @@
 package com.krass.liquidtestphoto.main.composables
 
-import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.krass.liquidtestphoto.R
+import com.krass.liquidtestphoto.SamplesNames
 
-lateinit var machines: MutableMap<String, String>
 
-
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MachinesList(_machines: MutableMap<String, String>){
-    machines = _machines
-    machines.toList().sortedBy { (key, value) -> value }.toMap()
-    LazyColumn {
-        for ((key, value) in machines){
-            item {
-                Row {
-                    TextField(value = key, onValueChange = { }, singleLine = true, modifier = Modifier.weight(1f).padding(2.dp),)
-                    TextField(value = value, onValueChange = { }, singleLine = true, modifier = Modifier.weight(1f).padding(2.dp),)
+fun MachinesList(
+    machines: SnapshotStateList<Pair<String, String>>,
+    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current, // Send the 'started' analytics event
+    onStart: () -> Unit,
+    onStop: () -> Unit
+){
+
+    val context = LocalContext.current
+    val currentOnStart by rememberUpdatedState(onStart)
+    val currentOnStop by rememberUpdatedState(onStop)
+    DisposableEffect(lifecycleOwner) {
+        // Create an observer that triggers our remembered callbacks
+        // for sending analytics events
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                currentOnStart()
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                currentOnStop()
+            }
+        }
+
+        // Add the observer to the lifecycle
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        // When the effect leaves the Composition, remove the observer
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+//    val tmp = machines.sortedBy { (key, value) -> key }.toMutableStateList()
+//    machines.clear()
+//    machines.addAll(machines.sortedBy { (key, value) -> key }.toMutableStateList())
+
+//    val data = remember { mutableStateListOf<Pair<String, String>>() }
+
+
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                title = {
+                    Text(stringResource(R.string.machines_and_hosts))
+                },
+                navigationIcon = {
+                    IconButton(onClick = { currentOnStop() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        SamplesNames.storeMachines(context, machines)
+                        currentOnStop()
+                    }) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.save),
+                            contentDescription = "Save",
+                            tint = Color.White
+                        )
+                    }
+                }
+            )
+        },
+
+    ) { innerPadding ->
+        LazyColumn(Modifier.background(Color.White).padding(innerPadding).fillMaxWidth()) {
+            itemsIndexed(machines) { index, item ->
+                val datum = machines[index]
+
+                Row(Modifier.fillMaxWidth()) {
+                    TextField(
+                        value = datum.first,
+                        onValueChange = { machines[index] = machines[index].copy(first = it) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f).padding(2.dp),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                            focusedContainerColor = MaterialTheme.colorScheme.background
+                        )
+                    )
+                    TextField(
+                        value = datum.second,
+                        onValueChange = { machines[index] = machines[index].copy(second = it) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f).padding(2.dp),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                            focusedContainerColor = MaterialTheme.colorScheme.background
+                        )
+                    )
                 }
             }
         }
     }
+    BackHandler {
+        currentOnStop()
+    }
 }
 
-@Preview
-@Composable
-fun MachinesListPreview(){
-    MachinesList(mutableMapOf<String, String>("Key" to "Value"))
-}

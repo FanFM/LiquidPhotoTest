@@ -42,7 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.krass.liquidtestphoto.R
-import com.krass.liquidtestphoto.fileNames
+import com.krass.liquidtestphoto.SamplesNames
 import com.krass.liquidtestphoto.photo.composables.Dropdown
 import com.krass.liquidtestphoto.ui.theme.MainTheme
 import java.io.File
@@ -92,7 +92,7 @@ class PhotoActivity : ComponentActivity() {
 fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
     val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-    var selectedItem by rememberSaveable { mutableStateOf("") }
+    var selectedItemId by rememberSaveable { mutableStateOf(0) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -104,8 +104,7 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
                     Text(stringResource(R.string.choose_name))
                 }
             )
-        }){
-            innerPadding ->
+        }) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding).background(MaterialTheme.colorScheme.onBackground),
@@ -113,17 +112,22 @@ fun PhotoScreen(bitmap: Bitmap, uri: Uri, context: Context) {
         ) {
             Box(Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.align(Alignment.TopStart)) {
-                Image(bitmap = bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxWidth().padding(16.dp))
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    )
                     val buttonModifier = Modifier.fillMaxWidth()
-                    Dropdown(false, onItemClick = {selectedItem = it})
-                    }
-                    Button(onClick = {
-                        if(selectedItem.isEmpty()) {
-                            selectedItem = fileNames.get(0)
-                        }
-                    saveMediaToStorage(selectedItem, bitmap, context)
-                        onBackPressedDispatcher?.onBackPressed()
-                    }, modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)){
+                    Dropdown(false, onItemClick = { selectedItemId = it })
+                }
+                Button(onClick = {
+//                        if(selectedItemId.isEmpty()) {
+//                            selectedItemId = fileNames.get(0)
+//                        }
+                    val sample = SamplesNames.getInstance().getMachines(context).get(selectedItemId)
+                    saveMediaToStorage(SamplesNames.samplePairToFileName(sample), bitmap, context)
+                    onBackPressedDispatcher?.onBackPressed()
+                }, modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
                     Text(text = stringResource(R.string.save))
                 }
             }
@@ -206,6 +210,11 @@ private fun getFilePath(uri: Uri, context: Context): String? {
 @Preview
 @Composable
 fun PhotoScreenPreview(){
-    PhotoScreen(Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888), Uri.EMPTY, context = PhotoActivity())
-
+    MainTheme {
+        PhotoScreen(
+            Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888),
+            Uri.EMPTY,
+            context = PhotoActivity()
+        )
+    }
 }

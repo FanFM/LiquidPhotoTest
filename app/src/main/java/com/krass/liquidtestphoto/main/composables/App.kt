@@ -3,8 +3,8 @@ package com.krass.liquidtestphoto.main.composables
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,18 +38,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -70,18 +65,16 @@ fun App(onClick: (String) -> Unit, _images: MutableList<Uri>) {
     val navController = rememberNavController()
     val cameraIcon = ImageVector.vectorResource(R.drawable.photo_camera)
     val newFolderIcon = ImageVector.vectorResource(R.drawable.create_new_folder)
-    val sendIcon = ImageVector.vectorResource(R.drawable.send)
+    val machinesListIcon = ImageVector.vectorResource(R.drawable.view_list)
     val cameraDesc = stringResource(R.string.camera)
     val newFolderDesc = stringResource(R.string.add_new_folder)
-    val sendDesc = stringResource(R.string.send)
-
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val machinesListDesc = stringResource(R.string.machines)
 
     val buttons = remember {
         listOf(
             Triple(newFolderDesc, false, newFolderIcon),
             Triple(cameraDesc, true, cameraIcon),
-            Triple(sendDesc, false, sendIcon)
+            Triple(machinesListDesc, false, machinesListIcon)
         )
     }
 
@@ -106,11 +99,10 @@ fun App(onClick: (String) -> Unit, _images: MutableList<Uri>) {
                 for (button in buttons) {
                     composable(button.first) {
 //                        when (button.first) {
-//                            newFolderDesc -> NewFolderScreen()
-//                            cameraDesc -> CameraScreen()
-//                            galleryDesc -> GalleryScreen()
+//                            cameraDesc -> MainScreenContent(padding)
+//                            machinesListDesc -> MachinesList(padding)
 //                        }
-                        ScreenContent(padding)
+                        MainScreenContent(padding)
                     }
                 }
             }
@@ -127,7 +119,7 @@ private fun BottomBar(
 ) {
     val cameraDesc = stringResource(R.string.camera)
     val newFolderDesc = stringResource(R.string.add_new_folder)
-    val sendDesc = stringResource(R.string.send)
+    val machinesDesc = stringResource(R.string.machines)
     var selected by rememberSaveable {
         mutableStateOf(defaultScreen.first)
     }
@@ -210,7 +202,7 @@ private fun BottomBar(
                                     when(button.first){
                                         newFolderDesc -> onClick("newFolder")
                                         cameraDesc -> onClick("camera")
-                                        sendDesc -> onClick("send")
+                                        machinesDesc -> onClick("machines")
                                     }
 
 
@@ -263,29 +255,61 @@ private fun BottomBar(
 }
 
 @Composable
-private fun ScreenContent(padding: PaddingValues) {
+private fun MainScreenContent(padding: PaddingValues) {
     LazyColumn(contentPadding = padding) {
         images.forEachIndexed { index, uri ->
-            if (index % 2 == 0) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        AsyncImage(
-                            modifier = Modifier.weight(1f).padding(8.dp),
-                            model = images[index],
-                            contentDescription = images[index].path
-                        )
-                        if (index + 1 < images.size) {
-                            AsyncImage(
-                                modifier = Modifier.weight(1f).padding(8.dp),
-                                model = images[index + 1],
-                                contentDescription = images[index + 1].path
-                            )
-                        } else{
-                            Box(modifier = Modifier.weight(1f))
+            if(uri.path?.split("/")?.last()?.contains("_") == true) {
+                if (index % 2 == 0) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f).padding(8.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.primary)
+                            ) {
+                                AsyncImage(
+                                    model = images[index],
+                                    contentDescription = images[index].path
+                                )
+                                images[index].path?.let {
+                                    it.split("/").last().let { it1 ->
+                                        Text(
+                                            text = it1,
+                                            modifier = Modifier.fillMaxWidth().padding(2.dp),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontSize = 10.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                            if (index + 1 < images.size) {
+                                Column(
+                                    modifier = Modifier.weight(1f).padding(8.dp)
+                                        .border(1.dp, MaterialTheme.colorScheme.primary)
+                                ) {
+                                    AsyncImage(
+                                        model = images[index + 1],
+                                        contentDescription = images[index + 1].path
+                                    )
+                                    images[index + 1].path?.let {
+                                        it.split("/").last().let { it1 ->
+                                            Text(
+                                                text = it1,
+                                                modifier = Modifier.fillMaxWidth().padding(2.dp),
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                fontSize = 10.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                Box(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }

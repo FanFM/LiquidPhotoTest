@@ -23,6 +23,11 @@
         android:theme="@style/Theme.LiquidTestPhoto"
         tools:targetApi="31">
         <activity
+            android:name=".machines.MachinesActivity"
+            android:exported="false"
+            android:label="@string/title_activity_machines"
+            android:theme="@style/Theme.LiquidTestPhoto" />
+        <activity
             android:name=".photo.PhotoActivity"
             android:exported="false"
             android:label="@string/title_activity_photo"
