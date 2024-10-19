@@ -17,9 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.krass.liquidtestphoto.R
 import com.krass.liquidtestphoto.SamplesNames
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +40,7 @@ fun Dropdown(initialState: Boolean, onItemClick: (Int) -> Unit) {
             value = SamplesNames.toShortMachineName(machines[selectedOption].first),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Choose an option") },
+            label = { Text(text = stringResource(R.string.choose_option)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },

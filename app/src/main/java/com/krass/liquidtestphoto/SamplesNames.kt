@@ -78,8 +78,9 @@ class SamplesNames private constructor() {
             context: Context,
             machines: SnapshotStateList<Pair<String, String>>
         ) {
+            machines.removeIf{(key, value) -> key.isEmpty() && value.isEmpty()}
             var machinesString = ""
-            machines.forEach {
+            machines.forEach{
                 machinesString += "${it.first}(${it.second})|"
             }
             val sharedPref = context.getSharedPreferences("my_prefs", Context.MODE_PRIVATE)
@@ -97,8 +98,14 @@ class SamplesNames private constructor() {
         fun toShortMachineName(machineName: String): String {
             var shortName: String
             val tmp: List<String> = machineName.split("[_]".toRegex())
+            if (tmp.size < 3) {
+                return machineName
+            }
             shortName = tmp[1]
             val tmp2: List<String> = shortName.split("[-]".toRegex()) //3,4
+            if (tmp2.size < 3) {
+                return shortName
+            }
             shortName = tmp2[0] + "-" + tmp2[2] + " " + tmp[2]
             if (tmp.size == 4) {
                 shortName += " " + tmp[3]

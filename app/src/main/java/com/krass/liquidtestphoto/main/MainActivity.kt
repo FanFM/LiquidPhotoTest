@@ -27,7 +27,7 @@ import java.io.File
 
 class MainActivity : BaseActivity() {
 
-    val images = mutableStateListOf<Uri>()
+    private val images = mutableStateListOf<Uri>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,8 +116,11 @@ class MainActivity : BaseActivity() {
             val allFiles: Array<out File>? = directory.listFiles()
             if (allFiles != null) {
                 for (file in allFiles) {
-                    images.add(Uri.fromFile(file))
-                    Log.d("file", file.name)
+                    val uri = Uri.fromFile(file)
+                    if(uri.path?.split("/")?.last()?.contains("_") == true) {
+                        images.add(Uri.fromFile(file))
+                        Log.d("file", file.name)
+                    }
                 }
             }
         }

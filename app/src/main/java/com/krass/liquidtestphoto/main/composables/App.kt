@@ -21,10 +21,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -55,10 +63,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.krass.liquidtestphoto.R
+import com.krass.liquidtestphoto.SamplesNames
 import com.krass.liquidtestphoto.ui.theme.MainTheme
 
 lateinit var images: MutableList<Uri>
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(onClick: (String) -> Unit, _images: MutableList<Uri>) {
     images = _images
@@ -82,6 +92,30 @@ fun App(onClick: (String) -> Unit, _images: MutableList<Uri>) {
 
     MainTheme {
         Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    colors = topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+//                    modifier = Modifier.height(48.dp),
+                    title =
+                    {
+                        Text(stringResource(R.string.app_name))
+                    },
+//                    actions = {
+//                        IconButton(onClick = {
+//
+//                        }) {
+//                            Icon(
+//                                imageVector = ImageVector.vectorResource(R.drawable.save),
+//                                contentDescription = "Save",
+//                                tint = Color.White
+//                            )
+//                        }
+//                    }
+                )
+            },
             bottomBar = {
                 BottomBar(
                     navController = navController,
@@ -258,23 +292,44 @@ private fun BottomBar(
 private fun MainScreenContent(padding: PaddingValues) {
     LazyColumn(contentPadding = padding) {
         images.forEachIndexed { index, uri ->
-            if(uri.path?.split("/")?.last()?.contains("_") == true) {
-                if (index % 2 == 0) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.Top,
-                            horizontalArrangement = Arrangement.SpaceEvenly
+            if (index % 2 == 0) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+
+                        Column(
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.primary)
                         ) {
+                            AsyncImage(
+                                model = images[index],
+                                contentDescription = images[index].path
+                            )
+                            images[index].path?.let {
+                                it.split("/").last().let { it1 ->
+                                    Text(
+                                        text = it1,
+                                        modifier = Modifier.fillMaxWidth().padding(2.dp),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 10.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                        if (index + 1 < images.size) {
                             Column(
                                 modifier = Modifier.weight(1f).padding(8.dp)
                                     .border(1.dp, MaterialTheme.colorScheme.primary)
                             ) {
                                 AsyncImage(
-                                    model = images[index],
-                                    contentDescription = images[index].path
+                                    model = images[index + 1],
+                                    contentDescription = images[index + 1].path
                                 )
-                                images[index].path?.let {
+                                images[index + 1].path?.let {
                                     it.split("/").last().let { it1 ->
                                         Text(
                                             text = it1,
@@ -286,30 +341,8 @@ private fun MainScreenContent(padding: PaddingValues) {
                                     }
                                 }
                             }
-                            if (index + 1 < images.size) {
-                                Column(
-                                    modifier = Modifier.weight(1f).padding(8.dp)
-                                        .border(1.dp, MaterialTheme.colorScheme.primary)
-                                ) {
-                                    AsyncImage(
-                                        model = images[index + 1],
-                                        contentDescription = images[index + 1].path
-                                    )
-                                    images[index + 1].path?.let {
-                                        it.split("/").last().let { it1 ->
-                                            Text(
-                                                text = it1,
-                                                modifier = Modifier.fillMaxWidth().padding(2.dp),
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                fontSize = 10.sp,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
-                            } else {
-                                Box(modifier = Modifier.weight(1f))
-                            }
+                        } else {
+                            Box(modifier = Modifier.weight(1f))
                         }
                     }
                 }

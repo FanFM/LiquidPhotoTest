@@ -2,6 +2,7 @@ package com.krass.liquidtestphoto.main.composables
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BottomAppBar
@@ -24,9 +26,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -104,6 +108,15 @@ fun MachinesList(
                 },
                 actions = {
                     IconButton(onClick = {
+                        machines.add(0, Pair("", ""))
+                    }) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.add),
+                            contentDescription = "Add",
+                            tint = Color.White
+                        )
+                    }
+                    IconButton(onClick = {
                         SamplesNames.storeMachines(context, machines)
                         currentOnStop()
                     }) {
@@ -118,10 +131,16 @@ fun MachinesList(
         },
 
     ) { innerPadding ->
-        LazyColumn(Modifier.background(Color.White).padding(innerPadding).fillMaxWidth()) {
+        val scrollState = rememberLazyListState()
+        LaunchedEffect(machines.size) {
+            if (machines.isNotEmpty()) scrollState.animateScrollToItem(0)
+        }
+        LazyColumn(
+            modifier = Modifier.background(Color.White).padding(innerPadding).fillMaxWidth(),
+            state = scrollState
+            ) {
             itemsIndexed(machines) { index, item ->
                 val datum = machines[index]
-
                 Row(Modifier.fillMaxWidth()) {
                     TextField(
                         value = datum.first,
@@ -133,16 +152,30 @@ fun MachinesList(
                             focusedContainerColor = MaterialTheme.colorScheme.background
                         )
                     )
-                    TextField(
-                        value = datum.second,
-                        onValueChange = { machines[index] = machines[index].copy(second = it) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f).padding(2.dp),
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.background,
-                            focusedContainerColor = MaterialTheme.colorScheme.background
+                    Box(modifier = Modifier.weight(1f)
+                        .padding(2.dp),) {
+                        TextField(
+                            value = datum.second,
+                            onValueChange = { machines[index] = machines[index].copy(second = it) },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                unfocusedContainerColor = MaterialTheme.colorScheme.background,
+                                focusedContainerColor = MaterialTheme.colorScheme.background
+                            )
                         )
-                    )
+                        IconButton(
+                            onClick = {
+                                machines.removeAt(index)
+                            },
+                            modifier = Modifier.align(Alignment.CenterEnd).width(40.dp).height(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.delete),
+                                contentDescription = "Delete",
+                                tint = Color.White,
+                            )
+                        }
+                    }
                 }
             }
         }
